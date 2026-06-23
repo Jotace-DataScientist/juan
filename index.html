@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GRE Word Clusters</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    background: #f3eee3; color: #2c2722;
+    font-family: Georgia, 'Spectral', serif;
+    -webkit-font-smoothing: antialiased;
+    padding: 0 24px 120px;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; }
+  a { color: inherit; }
+  header { padding: 48px 0 28px; border-bottom: 1px solid #e2dac9; }
+  .kicker {
+    font-family: 'Courier New', monospace; font-size: 11.5px;
+    letter-spacing: 0.22em; text-transform: uppercase; color: #5e7356; font-weight: 700;
+  }
+  h1 { font-weight: 600; font-size: 38px; line-height: 1.1; letter-spacing: -0.01em; margin: 14px 0 10px; max-width: 22ch; }
+  .sub { font-size: 17px; line-height: 1.5; color: #6f665a; max-width: 64ch; margin: 0; font-weight: 400; }
+
+  .tabs { display: inline-flex; background: #ebe4d6; border: 1px solid #ddd4c2; border-radius: 999px; padding: 3px; margin-top: 24px; }
+  .tab {
+    border: none; background: transparent; cursor: pointer; padding: 8px 18px; border-radius: 999px;
+    font-family: Georgia, serif; font-size: 14.5px; color: #6f665a;
+  }
+  .tab.active { background: #fbf8f1; color: #2c2722; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
+
+  .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 18px; }
+  .search-box { position: relative; flex: 1; max-width: 380px; }
+  .search-box span { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #a89e8d; }
+  input[type=text], select {
+    font-family: Georgia, serif; font-size: 15px; color: #2c2722; background: #fbf8f1;
+    border: 1px solid #ddd4c2; outline: none;
+  }
+  input[type=text] { width: 100%; border-radius: 999px; padding: 9px 16px 9px 34px; }
+  select { border-radius: 8px; padding: 8px 12px; max-width: 320px; }
+  button.ghost {
+    font-family: Georgia, serif; font-size: 14px; color: #5e7356; background: #fff;
+    border: 1px solid #ddd4c2; border-radius: 999px; padding: 8px 16px; cursor: pointer;
+  }
+  button.solid {
+    font-family: Georgia, serif; font-size: 14px; color: #fff; background: #5e7356;
+    border: none; border-radius: 999px; padding: 8px 16px; cursor: pointer;
+  }
+  label.f {
+    font-family: 'Courier New', monospace; font-size: 11px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: #8a8073;
+  }
+
+  section.sec { margin-top: 46px; }
+  .sec-head { display: flex; align-items: baseline; gap: 16px; margin-bottom: 20px; }
+  .sec-head h2 { font-weight: 600; font-size: 14px; letter-spacing: 0.16em; text-transform: uppercase; color: #5e7356; margin: 0; white-space: nowrap; }
+  .sec-head .line { flex: 1; height: 1px; background: #e2dac9; }
+
+  .cluster { background: #fbf8f1; border: 1px solid #e7dfcf; border-radius: 14px; padding: 22px 24px; margin-bottom: 18px; }
+  .cluster h3 { font-size: 19px; margin: 0 0 4px; font-weight: 600; }
+  .cluster .gloss { color: #6f665a; font-size: 14.5px; margin: 0 0 12px; font-style: italic; }
+  .hook { font-size: 14px; color: #4a4338; background: #f0ead9; border-left: 3px solid #5e7356; padding: 10px 14px; border-radius: 6px; margin-bottom: 14px; line-height: 1.5; }
+  .words { display: flex; flex-wrap: wrap; gap: 8px; }
+  .word-chip { background: #fff; border: 1px solid #e2dac9; border-radius: 8px; padding: 6px 10px; font-size: 13.5px; }
+  .word-chip b { font-weight: 700; }
+  .word-chip.anti { border-color: #c98a5e; background: #fbf1e6; }
+  .word-chip .d { color: #6f665a; font-size: 12.5px; }
+  mark { background: #f7d77e; padding: 0 2px; border-radius: 2px; }
+
+  .no-results { padding: 70px 0; text-align: center; color: #8a8073; font-size: 17px; font-style: italic; }
+
+  /* flashcards */
+  .card-wrap { display: flex; flex-direction: column; align-items: center; margin-top: 30px; }
+  .progress { font-family: 'Courier New', monospace; font-size: 12px; color: #8a8073; margin-bottom: 14px; letter-spacing: 0.05em; }
+  .card {
+    width: 100%; max-width: 560px; height: 320px; background: #fbf8f1; border: 1px solid #e7dfcf;
+    border-radius: 18px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 30px; cursor: pointer; user-select: none; box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+  }
+  .card .front { font-size: 38px; font-weight: 600; }
+  .card .fam { margin-top: 12px; font-size: 13px; color: #8a8073; letter-spacing: 0.04em; }
+  .card .back-def { font-size: 22px; font-weight: 500; margin-bottom: 14px; }
+  .card .back-hook { font-size: 14px; color: #6f665a; line-height: 1.5; max-width: 90%; }
+  .card-actions { display: flex; gap: 14px; margin-top: 20px; }
+  .nav-hint { font-size: 11px; color: #b3a994; margin-top: 16px; letter-spacing: 0.04em; }
+  .anti-tag { display:inline-block; margin-top:8px; font-size:11px; color:#c98a5e; letter-spacing:0.08em; text-transform:uppercase; }
+
+  /* quiz */
+  .quiz-wrap { max-width: 620px; margin: 30px auto 0; }
+  .quiz-stat { display: flex; justify-content: space-between; font-family: 'Courier New', monospace; font-size: 13px; color: #8a8073; margin-bottom: 16px; }
+  .q-word { font-size: 32px; font-weight: 600; text-align: center; margin: 10px 0 28px; }
+  .opt {
+    display: block; width: 100%; text-align: left; background: #fbf8f1; border: 1px solid #ddd4c2;
+    border-radius: 10px; padding: 14px 18px; margin-bottom: 10px; font-size: 16px; font-family: Georgia, serif;
+    cursor: pointer; color: #2c2722;
+  }
+  .opt.correct { background: #e3ede0; border-color: #5e7356; }
+  .opt.wrong { background: #f6e1da; border-color: #c98a5e; }
+  .opt:disabled { cursor: default; }
+  .quiz-summary { text-align: center; padding: 60px 0; }
+  .quiz-summary .score { font-size: 52px; font-weight: 600; margin: 14px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="kicker">GRE &nbsp;·&nbsp; 500 essential words &nbsp;·&nbsp; clustered for memory</div>
+    <h1>Words that mean the same, learned together.</h1>
+    <p class="sub">Your brain files vocabulary by meaning, not alphabet. Browse word families with their mnemonic hooks, drill them as flashcards, or test yourself with a quiz.</p>
+
+    <div class="tabs">
+      <button class="tab" data-tab="browse">Browse</button>
+      <button class="tab" data-tab="cards">Flashcards</button>
+      <button class="tab" data-tab="quiz">Test</button>
+    </div>
+
+    <div class="toolbar" id="toolbar"></div>
+  </header>
+
+  <main id="main"></main>
+
+</div>
+
+<script type="module">
+import { SECTIONS, CLUSTERS } from './data.js';
+
+const state = {
+  tab: localStorage.getItem('gre_tab') || 'browse',
+  query: '',
+  scope: localStorage.getItem('gre_scope') || 'all',
+  known: JSON.parse(localStorage.getItem('gre_known') || '{}'),
+  // flashcards
+  order: [], pos: 0, flipped: false,
+  // quiz
+  quizOrder: [], quizPos: 0, quizScore: 0, quizAnswered: false, quizFinished: false,
+};
+
+function persist() {
+  localStorage.setItem('gre_tab', state.tab);
+  localStorage.setItem('gre_scope', state.scope);
+  localStorage.setItem('gre_known', JSON.stringify(state.known));
+}
+
+function allWords() {
+  const out = [];
+  for (const cl of CLUSTERS) {
+    for (const w of cl.words) {
+      out.push({ w: w.w, d: w.d, anti: !!w.anti, family: cl.title, gloss: cl.gloss, hook: cl.hook, section: cl.section, clId: cl.id });
+    }
+  }
+  return out;
+}
+const WORDS = allWords();
+
+function deckFor(scope) {
+  if (scope === 'all') return WORDS;
+  if (scope.startsWith('cl:')) return WORDS.filter(w => w.clId === scope.slice(3));
+  if (scope.startsWith('sec:')) return WORDS.filter(w => w.section === scope.slice(4));
+  return WORDS;
+}
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function rebuildDeck(shuffled) {
+  const deck = deckFor(state.scope);
+  let order = deck.map((_, i) => i);
+  if (shuffled) order = shuffle(order);
+  state.order = order;
+  state.pos = 0;
+  state.flipped = false;
+}
+
+function rebuildQuiz() {
+  const deck = shuffle(deckFor(state.scope));
+  state.quizOrder = deck.slice(0, Math.min(15, deck.length));
+  state.quizPos = 0;
+  state.quizScore = 0;
+  state.quizAnswered = false;
+  state.quizFinished = state.quizOrder.length === 0;
+}
+
+function scopeOptionsHtml() {
+  let html = `<option value="all">All ${WORDS.length} words</option>`;
+  for (const sec of SECTIONS) {
+    const clustersInSec = CLUSTERS.filter(c => c.section === sec);
+    html += `<optgroup label="${esc(sec)}">`;
+    for (const cl of clustersInSec) {
+      html += `<option value="cl:${esc(cl.id)}">${esc(cl.title)} (${cl.words.length})</option>`;
+    }
+    html += `</optgroup>`;
+  }
+  return html;
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function highlight(text, q) {
+  if (!q) return esc(text);
+  const idx = text.toLowerCase().indexOf(q.toLowerCase());
+  if (idx === -1) return esc(text);
+  return esc(text.slice(0, idx)) + '<mark>' + esc(text.slice(idx, idx + q.length)) + '</mark>' + esc(text.slice(idx + q.length));
+}
+
+function setTab(tab) {
+  state.tab = tab;
+  document.querySelectorAll('.tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  if (tab === 'cards') rebuildDeck(false);
+  if (tab === 'quiz') rebuildQuiz();
+  persist();
+  renderToolbar();
+  renderMain();
+}
+
+function renderToolbar() {
+  const bar = document.getElementById('toolbar');
+  if (state.tab === 'browse') {
+    bar.innerHTML = `
+      <div class="search-box"><span>⌕</span>
+        <input type="text" id="search" placeholder="Search a word or meaning…" value="${esc(state.query)}">
+      </div>`;
+    document.getElementById('search').oninput = e => { state.query = e.target.value; renderMain(); };
+  } else if (state.tab === 'cards') {
+    bar.innerHTML = `
+      <label class="f">Deck</label>
+      <select id="scope">${scopeOptionsHtml()}</select>
+      <button class="ghost" id="shuffleBtn">↺ Shuffle</button>
+    `;
+    document.getElementById('scope').value = state.scope;
+    document.getElementById('scope').onchange = e => { state.scope = e.target.value; persist(); rebuildDeck(false); renderMain(); };
+    document.getElementById('shuffleBtn').onclick = () => { rebuildDeck(true); renderMain(); };
+  } else if (state.tab === 'quiz') {
+    bar.innerHTML = `
+      <label class="f">Deck</label>
+      <select id="scope">${scopeOptionsHtml()}</select>
+      <button class="ghost" id="restartBtn">↺ Restart test</button>
+    `;
+    document.getElementById('scope').value = state.scope;
+    document.getElementById('scope').onchange = e => { state.scope = e.target.value; persist(); rebuildQuiz(); renderMain(); };
+    document.getElementById('restartBtn').onclick = () => { rebuildQuiz(); renderMain(); };
+  }
+}
+
+function renderMain() {
+  const main = document.getElementById('main');
+  if (state.tab === 'browse') return renderBrowse(main);
+  if (state.tab === 'cards') return renderCards(main);
+  if (state.tab === 'quiz') return renderQuiz(main);
+}
+
+function renderBrowse(main) {
+  const q = state.query.trim().toLowerCase();
+  let html = '';
+  let anyMatch = false;
+  for (const sec of SECTIONS) {
+    const clustersInSec = CLUSTERS.filter(c => c.section === sec);
+    let secHtml = '';
+    for (const cl of clustersInSec) {
+      const matchedWords = q
+        ? cl.words.filter(w => w.w.toLowerCase().includes(q) || w.d.toLowerCase().includes(q))
+        : cl.words;
+      const clusterMatches = q && (cl.title.toLowerCase().includes(q) || cl.gloss.toLowerCase().includes(q));
+      if (q && matchedWords.length === 0 && !clusterMatches) continue;
+      const wordsToShow = (q && matchedWords.length > 0) ? matchedWords : cl.words;
+      anyMatch = true;
+      secHtml += `
+        <div class="cluster">
+          <h3>${highlight(cl.title, q)}</h3>
+          <p class="gloss">${esc(cl.gloss)}</p>
+          <div class="hook">${esc(cl.hook)}</div>
+          <div class="words">
+            ${wordsToShow.map(w => `
+              <div class="word-chip${w.anti ? ' anti' : ''}">
+                <b>${highlight(w.w, q)}</b> — <span class="d">${highlight(w.d, q)}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>`;
+    }
+    if (secHtml) {
+      html += `
+        <section class="sec">
+          <div class="sec-head"><h2>${esc(sec)}</h2><div class="line"></div></div>
+          ${secHtml}
+        </section>`;
+    }
+  }
+  if (!anyMatch) {
+    html = `<div class="no-results">No words match "${esc(state.query)}".</div>`;
+  }
+  main.innerHTML = html;
+}
+
+function renderCards(main) {
+  if (state.order.length === 0) {
+    main.innerHTML = `<div class="no-results">No words in this deck.</div>`;
+    return;
+  }
+  const deck = deckFor(state.scope);
+  const idx = state.order[state.pos];
+  const card = deck[idx];
+  const isKnown = !!state.known[card.w];
+  main.innerHTML = `
+    <div class="card-wrap">
+      <div class="progress">${state.pos + 1} / ${state.order.length} &nbsp;·&nbsp; ${Object.keys(state.known).length} marked known</div>
+      <div class="card" id="flashcard">
+        ${state.flipped ? `
+          <div class="back-def">${esc(card.d)}</div>
+          <div class="back-hook">${esc(card.hook)}</div>
+          ${card.anti ? '<div class="anti-tag">opposite pole</div>' : ''}
+        ` : `
+          <div class="front">${esc(card.w)}</div>
+          <div class="fam">${esc(card.family)}</div>
+        `}
+      </div>
+      <div class="card-actions">
+        <button class="ghost" id="prevBtn">← Prev</button>
+        <button class="${isKnown ? 'solid' : 'ghost'}" id="knownBtn">${isKnown ? '✓ Known' : 'Mark known'}</button>
+        <button class="ghost" id="nextBtn">Next →</button>
+      </div>
+      <div class="nav-hint">← / → to move &nbsp;·&nbsp; space or click card to flip</div>
+    </div>
+  `;
+  document.getElementById('flashcard').onclick = () => { state.flipped = !state.flipped; renderCards(main); };
+  document.getElementById('prevBtn').onclick = () => { prevCard(); };
+  document.getElementById('nextBtn').onclick = () => { nextCard(); };
+  document.getElementById('knownBtn').onclick = () => {
+    if (isKnown) delete state.known[card.w]; else state.known[card.w] = true;
+    persist();
+    renderCards(main);
+  };
+}
+
+function nextCard() {
+  state.pos = (state.pos + 1) % state.order.length;
+  state.flipped = false;
+  renderMain();
+}
+function prevCard() {
+  state.pos = (state.pos - 1 + state.order.length) % state.order.length;
+  state.flipped = false;
+  renderMain();
+}
+
+function renderQuiz(main) {
+  if (state.quizFinished) {
+    const pct = state.quizOrder.length ? Math.round(100 * state.quizScore / state.quizOrder.length) : 0;
+    main.innerHTML = `
+      <div class="quiz-wrap">
+        <div class="quiz-summary">
+          <div class="kicker">Test complete</div>
+          <div class="score">${state.quizScore} / ${state.quizOrder.length}</div>
+          <p class="sub" style="margin:0 auto;text-align:center;">${pct}% correct</p>
+          <button class="solid" id="retryBtn" style="margin-top:24px;">Try again</button>
+        </div>
+      </div>`;
+    document.getElementById('retryBtn').onclick = () => { rebuildQuiz(); renderMain(); };
+    return;
+  }
+  const card = state.quizOrder[state.quizPos];
+  // build options: 1 correct + 3 distractors from same deck pool (or full word list if deck small)
+  const pool = WORDS.filter(w => w.w !== card.w);
+  const distractors = shuffle(pool).slice(0, 3).map(w => w.d);
+  const options = shuffle([card.d, ...distractors]);
+  main.innerHTML = `
+    <div class="quiz-wrap">
+      <div class="quiz-stat">
+        <span>Question ${state.quizPos + 1} / ${state.quizOrder.length}</span>
+        <span>Score: ${state.quizScore}</span>
+      </div>
+      <div class="q-word">${esc(card.w)}</div>
+      <div id="opts"></div>
+    </div>
+  `;
+  const optsEl = document.getElementById('opts');
+  options.forEach(opt => {
+    const btn = document.createElement('button');
+    btn.className = 'opt';
+    btn.textContent = opt;
+    btn.onclick = () => answerQuiz(opt, card.d, btn, optsEl);
+    optsEl.appendChild(btn);
+  });
+}
+
+function answerQuiz(chosen, correct, btn, optsEl) {
+  if (state.quizAnswered) return;
+  state.quizAnswered = true;
+  const correctNow = chosen === correct;
+  if (correctNow) state.quizScore++;
+  Array.from(optsEl.children).forEach(b => {
+    b.disabled = true;
+    if (b.textContent === correct) b.classList.add('correct');
+    else if (b === btn) b.classList.add('wrong');
+  });
+  setTimeout(() => {
+    state.quizAnswered = false;
+    state.quizPos++;
+    if (state.quizPos >= state.quizOrder.length) state.quizFinished = true;
+    renderMain();
+  }, 800);
+}
+
+document.querySelectorAll('.tab').forEach(b => {
+  b.onclick = () => setTab(b.dataset.tab);
+});
+
+window.addEventListener('keydown', e => {
+  if (state.tab !== 'cards') return;
+  if (e.key === 'ArrowRight') { e.preventDefault(); nextCard(); }
+  else if (e.key === 'ArrowLeft') { e.preventDefault(); prevCard(); }
+  else if (e.key === ' ') { e.preventDefault(); state.flipped = !state.flipped; renderMain(); }
+});
+
+// init
+setTab(state.tab);
+</script>
+</body>
+</html>
