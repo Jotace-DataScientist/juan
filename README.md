@@ -36,15 +36,17 @@ The Vite dev server proxies `/api/*` to `http://localhost:4000`. Set `VITE_DEV_A
 ## Auth & data isolation
 Email + password accounts (bcrypt-hashed, JWT sessions, 7-day expiry). Every session/attempt/history/dashboard row is scoped to `user_id`, so two people (e.g. you and a partner) get fully separate histories and progress under one deployment.
 
-## Deploying (Railway or Render, free tier)
-This is set up as a **single deployable service**: in production the Express server serves the built React app as static files (see `server/src/index.js`), so you only need one web service plus one Postgres add-on.
+## Deploying (Render, free tier — no technical steps required)
+This repo includes a `render.yaml` "Blueprint" that automatically creates the database, sets the build/start commands, and generates the secret keys for you. You only need a free Render account.
 
-1. Provision a Postgres database (Railway/Render managed Postgres, or Neon) and copy its connection string.
-2. Create a web service from this repo with:
-   - Build command: `cd client && npm install && npm run build && cd ../server && npm install`
-   - Start command: `cd server && npm run migrate && npm start`
-   - Env vars: `DATABASE_URL`, `JWT_SECRET` (long random string), `ANTHROPIC_API_KEY` (optional), `CORS_ORIGIN` (your deployed URL, or omit/`*` since client and server share an origin in this setup), `PORT` (usually auto-set by the platform).
-3. Once deployed, register two accounts — one per profile — and you're set.
+1. Go to [render.com](https://render.com) and create a free account (you can sign up with your GitHub account).
+2. Click **New +** → **Blueprint**.
+3. Connect your GitHub account and select this repository.
+4. Render will detect `render.yaml` automatically and show you a preview of what it will create (1 free database + 1 free web service). Click **Apply**.
+5. (Optional) If you want AI-generated questions instead of only the offline question bank, open the new service's **Environment** tab and paste your Anthropic API key into `ANTHROPIC_API_KEY`. If you skip this, the app works fine using the built-in 72-question bank.
+6. Wait a few minutes for the first build to finish. Render will give you a public URL (something like `https://gre-math-app.onrender.com`) — open it, register two accounts (one per profile), and you're done.
+
+Everything else (database connection, JWT secret, build/start commands) is wired up automatically by the Blueprint — nothing to configure by hand.
 
 ## Project structure
 ```
